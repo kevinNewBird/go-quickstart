@@ -26,12 +26,12 @@ type Printer struct {
 	Writer // 可以传入不同的写入实现，达到不同的功能，比如数据库写入器和文件写入器
 }
 
-func (w *Printer) write(s string) error {
-	w.Writer.write(s)
+func (p *Printer) write(s string) error {
+	p.Writer.write(s)
 	return nil
 }
 
-func (w *Printer) close() error {
+func (p *Printer) close() error {
 	fmt.Println("close printer")
 	return nil
 }

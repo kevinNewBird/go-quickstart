@@ -47,3 +47,82 @@ waitgroup包是go语言提供的一种通知机制：子goroutine通知主gorout
  
 ## 2.5.goroutine之间通信
 go语言之间通信采用的是channel。类似于其他语言中的消息队列（生产者和消费者模型），再加上Go语言的语法糖，提供给使用者更好的使用体验。<br/>
+### 2.5.1.语法格式
+channel底层是一个环形数组。
+```properties
+var channel_name chan channel_type
+
+说明：
+channel_name: 定义的channel的变量名
+channel_type: 指定channel管道交换的数据类型
+```
+### 2.5.2.channel的放值和取值
+```go
+     // 1.channel的初始化, 初始化大小如果为0在放值的时候会阻塞，从而报错deadlock
+	var message chan string = make(chan string, 1)
+
+	// 2.放值到channel管道中
+	message <- "hello"
+
+	// 3.从channel管道中取值赋给data变量
+	data := <-message
+```
+### 2.5.3.channel的有缓冲和无缓冲
+有缓冲是指在初始化时，长度大于0；而无缓冲则是指初始化时，长度等于0。<br/>
+无缓冲区：必须要开goroutine，否则会有deadlock（go语言的happen-before机制保证了其的正确性，即内存屏障机制）。<br/>
+两者的适用场景说明：
+- 无缓冲区channel适用于通知，比如B要第一时间知道A是否已经完成；
+- 有缓冲区channel适用于生产者和消费者之间的通讯
+```go
+// 1.有缓冲的channel
+var cache chan string = make(chan string, 1)
+
+// 2.无缓冲的channel 
+var nocache chan string = make(chan string, 0)
+```
+go 中channel的应用场景：
+- 1.消息传递、消息过滤
+- 2.信号广播
+- 3.事件订阅和广播
+- 4.任务分发
+- 5.结果汇总
+- 6.并发控制
+- 7.同步和异步等等
+### 2.5.4.channel的forrange遍历获取
+当channel中不停的塞入数据时（生产者-消费者），可以通过forrange去进行遍历获取。同时挡不需要再接收数据了，也可以通过close方法通知到goroutine
+退出channel(已经关闭的channel，不能再放值了，但是可以再取值)。<br/>
+```go
+var message chan int = make(chan int, 2)
+
+	go func(message chan int) {
+		// 3.1.遍历获取channel缓存的值
+		for data := range message {
+			fmt.Println(data)
+		}
+
+		// 3.2.退出channel，打印相关信息
+		fmt.Println("all done")
+	}(message)
+
+	// 3.3.往channel中放值
+	message <- 1
+	message <- 2
+
+	// 3.4.通知channel退出
+	close(message)
+
+	// 注意：已经关闭的channel不能再次放值，但是可以取值
+	//message <- 3 // 关闭后，不允许放值
+	data := <-message
+	fmt.Println(data)
+
+	time.Sleep(time.Second * 2)
+```
+### 2.5.5.单向channel
+默认情况下，channel时双向的，即可以发送也可以接收。 但是，我们经常把一个channel作为参数传递，希望对方是单向传递。<br/>
+```go
+//  单向channel：只能写入float64的数据
+var wCh chan<- float64
+// 单向channel：只能读取int的数据
+var rCh <-chan int
+```

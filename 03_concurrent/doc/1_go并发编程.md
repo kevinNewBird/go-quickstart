@@ -126,3 +126,33 @@ var wCh chan<- float64
 // 单向channel：只能读取int的数据
 var rCh <-chan int
 ```
+### 2.5.6.select语句
+类似于switch...case语句，写法上很相似。不同的是，select语句更多是用于goroutine中，其功能和linux中的selec、poll、epoll大体是差不多的。<br/>
+select作用于多个channel，其会在多个channel中选择一个目前已经就绪的channel。<br/>
+实现代码片段：
+```go
+func main() {
+	// 案例：监听多个channel
+	g1Chan := make(chan struct{})
+	g2Chan := make(chan struct{})
+	go g11(g1Chan)
+	go g22(g2Chan)
+
+	// 1.某一个分支就绪了就执行分支 2.如果两个都就绪了，先执行哪个--随机的：目的是为了防止饥饿
+	// 应用场景，处理timeout的情况
+	timer := time.NewTimer(time.Second)
+	for {
+		select {
+		case <-g1Chan:
+			fmt.Println("g1 done")
+			return
+		case <-g2Chan:
+			fmt.Println("g2 done")
+			return
+		case <-timer.C:
+			fmt.Println("timeout")
+			return
+		}
+	}
+}
+```

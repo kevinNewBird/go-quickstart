@@ -156,3 +156,5 @@ func main() {
 	}
 }
 ```
+### 2.5.7.上下文context
+用于goroutine的信息传递。context包提供了三种函数：WithCancel， WithTimeout， WithValue。
